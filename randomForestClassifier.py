@@ -32,8 +32,6 @@ class RandomForest:
         return subset_data
 
     def _get_feature_indices(self, n_features):
-        if self.max_features is None or self.max_features > n_features:
-            self.max_features = int(np.sqrt(n_features))
         feature_indices = np.random.choice(n_features, self.max_features, replace=False)
         return feature_indices
 
