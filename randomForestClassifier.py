@@ -1,10 +1,10 @@
 import numpy as np
 import pandas as pd
 from sklearn import datasets
-from sklearn.metrics import accuracy_score
 from sklearn.model_selection import train_test_split
 
 from DecisionTree import DecisionTree
+
 
 class RandomForest:
     def __init__(self, num_trees=100, min_samples_split=2, max_depth=7, max_features=None):
@@ -42,6 +42,8 @@ class RandomForest:
 
     def predict_all(self, X):
         return [self.predict(x) for x in X]
+
+
 def main():
     print(f'Hello Random Forester!')
     # Load the iris dataset as a pandas DataFrame
@@ -66,7 +68,7 @@ def main():
     predictions = rf.predict_all(X_test)
 
     # Calculate the accuracy
-    accuracy = accuracy_score(y_test, predictions)
+    accuracy = np.sum(y_test == np.array(predictions)) / len(y_test)
     print(f'Random Forest Predictions: {predictions}')
     print(f'Accuracy: {accuracy:.2f}')
 
