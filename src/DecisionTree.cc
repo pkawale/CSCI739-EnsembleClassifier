@@ -113,9 +113,10 @@ public:
             class_occurences[a_class]++;
             if(class_occurences[a_class] > max_freq){
                 max_frequent_class = a_class;
+                max_freq = class_occurences[a_class];
             }
         }
-
+        std::cout<<"leaf-val"<<max_frequent_class<<std::endl;
         return max_frequent_class;
     }
 
@@ -232,6 +233,23 @@ public:
 
         return best_split; 
 
+    }
+
+    int predict(std::vector<double> x, Node* tempTree=NULL){
+        if(tempTree == NULL){
+            tempTree = root;
+        }
+        // std::cout<<"Here it comes"<<tempTree->feature_index<<std::endl;
+
+        if(tempTree->value != 0){
+            return tempTree->value;
+        }
+
+        double feature_val = x[tempTree->feature_index];
+        if(feature_val <= tempTree->threshold)
+            return predict(x, tempTree->left);
+        else
+            return predict(x, tempTree->right);
     }
 
 };

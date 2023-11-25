@@ -61,23 +61,30 @@ public:
     {
         size_t num_samples = dataset.size();
         size_t num_features = dataset[0].size();
-        std::vector<size_t> subset_indices = getRandomIndices(num_sub_samples, 0, num_samples, true);
+        std::vector<size_t> subset_indices = getRandomIndices(num_sub_samples, 0, num_samples-1, true);
 
         if(max_features == 0 || max_features > num_features){
             max_features = int(sqrt(num_features));
         }
 
-        std::vector<size_t> featureIndices = getRandomIndices(max_features, 0, num_features, false);
-        
+        std::vector<size_t> featureIndices = getRandomIndices(max_features, 0, num_features-1, false);
+        // std::vector temp = dataset[150];
+        // std::cout<<"Here"<<std::endl;
+        // std::cout<<"There "<<temp[0]<<std::endl;
+
         std::cout<<"After indices creation\n"<<std::endl;
 
         std::cout<<"size of dataset: "<<dataset.size()<< "size of each row: " << dataset[0].size()<<std::endl;
+
+        std::cout<<"size of subset: "<<subset_indices.size()<< "size of feature subset: " << featureIndices.size()<<std::endl;
         
         // std::cout<<
         std::cout<<"Subset Indices:\n";
         for(auto i:subset_indices)  std::cout<<i<<" ";
-        std::cout<<"Feature Indices:\n";
+        std::cout<<"\nFeature Indices:";
         for(auto i:featureIndices)  std::cout<<i<<" ";
+        
+        std::cout<<std::endl;
 
         for (int i = 0; i < subset_indices.size(); ++i) {
             std::vector<double> row;
@@ -120,34 +127,43 @@ public:
         return indices;
     }
 
-    // int predict(std::vector<double>& x) {
-    //     std::vector<int> treePreds;
-    //     for (int i = 0; i < trees.size(); ++i) {
-    //         treePreds.push_back(trees[i].predict(x));
-    //     }
+    int predict(std::vector<double>& x) {
+        std::vector<int> treePreds;
+        std::cout<<"Total number of trees"<<trees.size()<<std::endl;
+        for (int i = 0; i < trees.size(); ++i) {
+            treePreds.push_back(trees[i].predict(x));
+        }
+        return getMostCommonOutput(treePreds);;
+    }
 
-    //     int mostCommonOutput = getMostCommonOutput(treePreds);
-    //     return mostCommonOutput;
-    // }
+    std::vector<int> predict_all(std::vector<std::vector<double>>& X) {
+        std::vector<int> predictions;
+        for (size_t i = 0; i < X.size(); ++i) {
+            predictions.push_back(predict(X[i]));
+        }
+        return predictions;
+    }
 
-    // std::vector<int> predictAll(std::vector<std::vector<double>>& X) {
-    //     std::vector<int> predictions;
-    //     for (int i = 0; i < X.size(); ++i) {
-    //         predictions.push_back(predict(X[i]));
-    //     }
-    //     return predictions;
-    // }
+    int getMostCommonOutput(std::vector<int>& treePreds) {
+        // Find the most voted class
+        std::unordered_map<int, int> class_votes;
+        int highest_voted = -1, max_votes = 0;
 
-    // int getMostCommonOutput(std::vector<int>& treePreds) {
-    //     // Implementation of getMostCommonOutput function goes here...
-    // }
+        for(auto a_vote:treePreds){
+            if(class_votes.find(a_vote) == class_votes.end()){
+                class_votes[a_vote] = 0;
+            }
+            class_votes[a_vote]++;
+            if(class_votes[a_vote] > max_votes){
+                max_votes = class_votes[a_vote];
+                highest_voted = a_vote;
+            }
+        }
 
-    // Other member functions go here...
+        return highest_voted;
+    }
 
-    // std::vector<std::vector<double>> npToVector(np::ndarray& array) {
-    //     // Convert NumPy array to vector of vectors
-    //     // Implementation goes here...
-    // }
+    
 };
 
 int main() {
@@ -174,6 +190,16 @@ int main() {
     std::cout<<"starting with training \n"<<std::endl;
     rf.fit(dataset, labels);
 
+    std::cout<<"Training Ended\n"<<std::endl;
+    std::vector<int> predictions = rf.predict_all(dataset);
+
+    double accuracy = 0.0;
+    for(size_t i=0; i<labels.size(); ++i){
+        accuracy += ((predictions[i] == labels[i]) ? 1:0);
+    }
+    accuracy /= labels.size();
+
+    std::cout<<"\n\nAccuracy is: "<<accuracy;
     // Make predictions or perform other operations with the trained forest
     // ...
 
