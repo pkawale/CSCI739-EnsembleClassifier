@@ -1,8 +1,7 @@
 import numpy as np
 
 from Node import Node
-import pandas as pd
-from sklearn import datasets
+
 
 class DecisionTree:
     def __init__(self, min_samples_split, max_depth=7):
@@ -117,22 +116,3 @@ class DecisionTree:
     def predict_all(self, X):
         return [self.predict(x) for x in X]
 
-
-if __name__ == '__main__':
-    iris = datasets.load_iris()
-    df = pd.DataFrame(data=np.c_[iris['data'], iris['target']],
-                      columns=iris['feature_names'] + ['target'])
-    
-    tree = DecisionTree(5)
-
-    tree.fit(df)
-
-    accuracy = 0.0
-
-    X, y = df[:, :-1], df[:, -1].astype(int)
-
-    for i, x in enumerate(X):
-        if tree.predict(x) == y[i]:
-            accuracy += 1
-    
-    print("Accuracy:", accuracy/len(X))

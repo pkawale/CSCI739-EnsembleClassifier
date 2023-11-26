@@ -5,7 +5,7 @@
 #include <cmath>
 #include <random>
 #include <cmath>
-#include "Test.cc"
+#include "DecisionTree.cc"
 #include "iris_read.h"
 
 
@@ -30,20 +30,19 @@ public:
     /// @brief Runs the logic to fit the model.
     /// @param dataset 
     /// @param labels 
-    void fit(std::vector<std::vector<double>>& dataset, std::vector<int>& labels) {
-        size_t num_sub_samples = dataset.size();
-        size_t num_sub_features = int(dataset[0].size()/2);
+    void fit(std::vector<std::vector<double>>& dataset) {
 
-        std::cout<<"Inside of fit\n"<<std::endl;
+        // std::cout<<"Inside of fit\n"<<std::endl;
+        #pragma omp parallel for
         for (int i = 0; i < num_trees; ++i) {
             std::vector<std::vector<double>> data_subset;
             std::vector<int> label_subset;
             DecisionTree tree(min_samples_split, max_depth);
             
-            bootstrapSample(dataset, labels, num_sub_samples, num_sub_features,
-                            data_subset, label_subset);
-            std::cout<<"After bootstrap creation\n"<<std::endl;
-            tree.fit(data_subset, label_subset);
+            bootstrapSample(dataset,
+                            data_subset);
+            // std::cout<<"After bootstrap creation\n"<<std::endl;
+            tree.fit(data_subset);
             trees.push_back(tree);
         }
     }
@@ -52,46 +51,26 @@ public:
     /// @param dataset Data points which contain the parameters of a data
     /// @param labels Labels of the data points.
     /// @return Data subset vector
-    void bootstrapSample(std::vector<std::vector<double>>& dataset, 
-                                                        std::vector<int>& labels,
-                                                        size_t num_sub_samples,
-                                                        size_t num_sub_features,
-                                                        std::vector<std::vector<double>>& data_subset,
-                                                        std::vector<int>& label_subset) 
+    void bootstrapSample(std::vector<std::vector<double>>& dataset,
+                            std::vector<std::vector<double>>& data_subset) 
     {
-        size_t num_samples = dataset.size();
-        size_t num_features = dataset[0].size();
-        std::vector<size_t> subset_indices = getRandomIndices(num_sub_samples, 0, num_samples-1, true);
+        size_t n_samples = dataset.size();
+        size_t n_features = dataset[0].size() - 1;
+        std::vector<size_t> subset_indices = getRandomIndices(n_samples, 0, n_samples-1, true);
 
-        if(max_features == 0 || max_features > num_features){
-            max_features = int(sqrt(num_features));
+        if(max_features == 0 || max_features > n_features){
+            max_features = int(sqrt(n_features));
         }
 
-        std::vector<size_t> featureIndices = getRandomIndices(max_features, 0, num_features-1, false);
-        // std::vector temp = dataset[150];
-        // std::cout<<"Here"<<std::endl;
-        // std::cout<<"There "<<temp[0]<<std::endl;
-
-        std::cout<<"After indices creation\n"<<std::endl;
-
-        std::cout<<"size of dataset: "<<dataset.size()<< "size of each row: " << dataset[0].size()<<std::endl;
-
-        std::cout<<"size of subset: "<<subset_indices.size()<< "size of feature subset: " << featureIndices.size()<<std::endl;
-        
-        // std::cout<<
-        std::cout<<"Subset Indices:\n";
-        for(auto i:subset_indices)  std::cout<<i<<" ";
-        std::cout<<"\nFeature Indices:";
-        for(auto i:featureIndices)  std::cout<<i<<" ";
-        
-        std::cout<<std::endl;
+        std::vector<size_t> featureIndices = getRandomIndices(max_features, 0, n_features-1, false);
 
         for (int i = 0; i < subset_indices.size(); ++i) {
             std::vector<double> row;
             for (int j = 0; j < featureIndices.size(); ++j) {
                 row.push_back(dataset[subset_indices[i]][featureIndices[j]]);
             }
-            label_subset.push_back(labels[i]);
+            row.push_back(dataset[subset_indices[i]][n_features]);
+            // label_subset.push_back(labels[i]);
             data_subset.push_back(row);
         }
     }
@@ -129,7 +108,6 @@ public:
 
     int predict(std::vector<double>& x) {
         std::vector<int> treePreds;
-        std::cout<<"Total number of trees"<<trees.size()<<std::endl;
         for (int i = 0; i < trees.size(); ++i) {
             treePreds.push_back(trees[i].predict(x));
         }
@@ -168,14 +146,19 @@ public:
 
 int main() {
     // Example usage of RandomForest class
-    RandomForest rf(10, 3, 10);
+    RandomForest rf(100, 3, 10);
 
     // Get data, parameters and labels
     
-    std::vector<std::vector<double>> dataset;
+    std::vector<std::vector<double>> dataset, test_data;
     std::vector<int> labels;
 
     Read_Iris_Dataset(dataset, labels);
+
+    for(size_t i=0; i<dataset.size(); ++i){
+        test_data.push_back(dataset[i]);
+        dataset[i].push_back(labels[i]);
+    }
 
     std::cout<<"Read Data:";
     for(size_t i=0; i<dataset.size(); ++i){
@@ -187,8 +170,8 @@ int main() {
     std::cout << dataset.size() << std::endl;
     // check if the data load is corr
 
-    std::cout<<"starting with training \n"<<std::endl;
-    rf.fit(dataset, labels);
+    std::cout<<"Starting with training \n"<<std::endl;
+    rf.fit(dataset);
 
     std::cout<<"Training Ended\n"<<std::endl;
     std::vector<int> predictions = rf.predict_all(dataset);
@@ -199,7 +182,7 @@ int main() {
     }
     accuracy /= labels.size();
 
-    std::cout<<"\n\nAccuracy is: "<<accuracy;
+    std::cout<<"\n\nAccuracy is: "<<accuracy*100.0<<"%"<<std::endl;
     // Make predictions or perform other operations with the trained forest
     // ...
 
