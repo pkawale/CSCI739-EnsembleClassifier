@@ -30,7 +30,7 @@ public:
     /// @brief Runs the logic to fit the model.
     /// @param dataset 
     /// @param labels 
-    void fit(std::vector<std::vector<double>>& dataset, std::vector<int>& labels) {
+    void fit(std::vector<std::vector<double>>& dataset) {
         size_t num_sub_samples = dataset.size();
         size_t num_sub_features = int(dataset[0].size()/2);
 
@@ -40,10 +40,10 @@ public:
             std::vector<int> label_subset;
             DecisionTree tree(min_samples_split, max_depth);
             
-            bootstrapSample(dataset, labels, num_sub_samples, num_sub_features,
-                            data_subset, label_subset);
+            // bootstrapSample(dataset, labels, num_sub_samples, num_sub_features,
+            //                 data_subset, label_subset);
             std::cout<<"After bootstrap creation\n"<<std::endl;
-            tree.fit(data_subset, label_subset);
+            tree.fit(dataset);
             trees.push_back(tree);
         }
     }
@@ -172,10 +172,15 @@ int main() {
 
     // Get data, parameters and labels
     
-    std::vector<std::vector<double>> dataset;
+    std::vector<std::vector<double>> dataset, test_data;
     std::vector<int> labels;
 
     Read_Iris_Dataset(dataset, labels);
+
+    for(size_t i=0; i<dataset.size(); ++i){
+        test_data.push_back(dataset[i]);
+        dataset[i].push_back(labels[i]);
+    }
 
     std::cout<<"Read Data:";
     for(size_t i=0; i<dataset.size(); ++i){
@@ -188,7 +193,7 @@ int main() {
     // check if the data load is corr
 
     std::cout<<"starting with training \n"<<std::endl;
-    rf.fit(dataset, labels);
+    rf.fit(dataset);
 
     std::cout<<"Training Ended\n"<<std::endl;
     std::vector<int> predictions = rf.predict_all(dataset);

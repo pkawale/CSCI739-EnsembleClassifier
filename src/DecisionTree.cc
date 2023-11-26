@@ -61,8 +61,9 @@ private:
     Node* root;
 
 public:
-    DecisionTree(int min_samples_split, int max_depth = 7)
-        : min_samples_split(min_samples_split), max_depth(max_depth), root(NULL) {}
+    int treeId=0;
+    DecisionTree(int min_samples_split, int max_depth = 7, int id)
+        : min_samples_split(min_samples_split), max_depth(max_depth), root(NULL), treeId(id) {}
 
     Node* buildTree(std::vector<std::vector<double>>& X, std::vector<int>& y, int depth = 0) {
         size_t num_samples = X.size(), num_features = X[0].size();
@@ -240,7 +241,9 @@ public:
             tempTree = root;
         }
         // std::cout<<"Here it comes"<<tempTree->feature_index<<std::endl;
-
+        if(root == NULL || tempTree == NULL){
+            std::cout<<"The culprit!";
+        }
         if(tempTree->value != 0){
             return tempTree->value;
         }

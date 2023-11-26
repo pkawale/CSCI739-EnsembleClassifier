@@ -19,7 +19,7 @@ class RandomForest:
         for _ in range(self.num_trees):
             tree = DecisionTree(min_samples_split=self.min_samples_split, max_depth=self.max_depth)
             random_subset_data = self._bootstrap_sample(dataset)
-            tree.fit(random_subset_data)
+            tree.fit(dataset)
             self.trees.append(tree)
 
     def _bootstrap_sample(self, data):
@@ -55,6 +55,7 @@ def main():
     # Added stratification to ensure that the classes are evenly split.
     train_df, test_df = train_test_split(df, test_size=0.40, stratify=df['target'])
 
+    print(train_df)
     # Create and fit the random forest model
     # Slightly increased the max_depth and decreased num_trees for demonstration.
     rf = RandomForest(num_trees=10, min_samples_split=3, max_depth=10, max_features=None)
