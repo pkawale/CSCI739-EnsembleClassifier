@@ -57,7 +57,7 @@ def main():
 
     # Create and fit the random forest model
     # Slightly increased the max_depth and decreased num_trees for demonstration.
-    rf = RandomForest(num_trees=10, min_samples_split=3, max_depth=10, max_features=None)
+    rf = RandomForest(num_trees=100, min_samples_split=3, max_depth=15, max_features=None)
     rf.fit(train_df.values)
 
     # Prepare X_test and y_test for accuracy evaluation

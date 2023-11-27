@@ -7,6 +7,7 @@
 #include <cmath>
 #include "DecisionTree.cc"
 #include "iris_read.h"
+#include "InputRead.h"
 
 
 // Use random_device to obtain a seed for the random number engine
@@ -141,7 +142,6 @@ public:
         return highest_voted;
     }
 
-    
 };
 
 int main() {
@@ -153,21 +153,39 @@ int main() {
     std::vector<std::vector<double>> dataset, test_data;
     std::vector<int> labels;
 
-    Read_Iris_Dataset(dataset, labels);
+    const char* ip_type = "mnist";
+    
+    if(strcmp(ip_type, "mnist") == 0){
+        read_mnist("train-images-idx3-ubyte", "train-labels-idx1-ubyte", dataset);
+        // Read training data
+        read_mnist("t10k-images-idx3-ubyte", "t10k-labels-idx1-ubyte", test_data);
 
-    for(size_t i=0; i<dataset.size(); ++i){
-        test_data.push_back(dataset[i]);
-        dataset[i].push_back(labels[i]);
+        for(size_t i=0; i<test_data.size(); ++i){
+            std::vector<double> temp;
+            labels.push_back(test_data[i][test_data[i].size() - 1]);
+            for(size_t j=0; j<test_data[i].size()-1; ++j)
+                temp.push_back(test_data[i][j]);
+            test_data[i] = temp;
+        }
     }
 
-    std::cout<<"Read Data:";
-    for(size_t i=0; i<dataset.size(); ++i){
-        for(size_t j=0; j<dataset[0].size(); ++j){
-            std::cout << dataset[i][j] << " ";
+    else{
+        Read_Iris_Dataset(dataset, labels);
+        
+        for(size_t i=0; i<dataset.size(); ++i){
+            test_data.push_back(dataset[i]);
+            dataset[i].push_back(labels[i]);
         }
-        std::cout << labels[i] << std::endl;
-    }    
-    std::cout << dataset.size() << std::endl;
+    }
+
+    // std::cout<<"Read Data:";
+    // for(size_t i=0; i<dataset.size(); ++i){
+    //     for(size_t j=0; j<dataset[0].size(); ++j){
+    //         std::cout << dataset[i][j] << " ";
+    //     }
+    //     std::cout << labels[i] << std::endl;
+    // }    
+    // std::cout << dataset.size() << std::endl;
     // check if the data load is corr
 
     std::cout<<"Starting with training \n"<<std::endl;
