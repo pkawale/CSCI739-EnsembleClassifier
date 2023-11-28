@@ -146,7 +146,7 @@ public:
 
 int main() {
     // Example usage of RandomForest class
-    RandomForest rf(100, 3, 10);
+    RandomForest rf(1, 3, 10);
 
     // Get data, parameters and labels
     
