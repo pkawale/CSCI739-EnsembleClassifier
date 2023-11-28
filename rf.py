@@ -1,6 +1,8 @@
 import gzip
 import numpy as np
 import pandas as pd
+import sys
+import argparse
 from sklearn import datasets
 from sklearn.model_selection import train_test_split
 
@@ -45,7 +47,7 @@ class RandomForest:
         return [self.predict(x) for x in X]
 
 
-def load_images(file_path):
+def load_images_mnist(file_path):
     with gzip.open(file_path, 'r') as f:
         # magic number
         magic_number = int.from_bytes(f.read(4), 'big')
@@ -64,7 +66,7 @@ def load_images(file_path):
         return images
 
 
-def load_labels(file_path):
+def load_labels_mnist(file_path):
     with gzip.open(file_path, 'r') as f:
         # first 4 bytes is a magic number
         magic_number = int.from_bytes(f.read(4), 'big')
@@ -93,15 +95,39 @@ def load_data(ip = 'iris'):
         test_df = test_df.values
 
     elif(ip == 'mnist'):
-        train_df = np.c_[load_images('./data/train-images-idx3-ubyte.gz'), 
-                        load_labels('./data/train-labels-idx1-ubyte.gz')]
-        test_df = np.c_[load_images('./data/t10k-images-idx3-ubyte.gz'), 
-                        load_labels('./data/t10k-labels-idx1-ubyte.gz')]
+        train_df = np.c_[load_images_mnist('./data/train-images-idx3-ubyte.gz'), 
+                        load_labels_mnist('./data/train-labels-idx1-ubyte.gz')]
+        test_df = np.c_[load_images_mnist('./data/t10k-images-idx3-ubyte.gz'), 
+                        load_labels_mnist('./data/t10k-labels-idx1-ubyte.gz')]
 
+    else:
+        print('Unrecognized data load type', ip)
+        sys.exit(1)
     return train_df, test_df
 
 
 def main():
+    # Take user inputs
+    parser = argparse.ArgumentParser()
+    parser.add_argument("-n", help="number of trees", type=int)
+    parser.add_argument("-s", help="minimum samples to split", type=int)
+    parser.add_argument("-d", help="maximum depth of the tree", type=int)
+    parser.add_argument("-f", help="maximum number of features to use in a tree", type=int)
+
+    args = parser.parse_args()
+
+    # Initialize all the parameters
+    num_trees, min_samples_to_split, max_depth, max_features = 100, 3, 10, None
+
+    if args.n:
+        num_trees = args.n
+    if args.s:
+        min_samples_to_split = args.s
+    if args.d:
+        max_depth = args.d
+    if args.f:
+        max_features = args.f
+
     print(f'Hello Random Forester!')
     ip = input("Enter the type of data to use: ")
 
@@ -110,8 +136,18 @@ def main():
         print('Using the default iris')
 
     train_data, test_data = load_data(ip)
+    
+    # Check for illegal inputs
+    if(train_data.shape[0] < min_samples_to_split):
+        print(f"Min samples to split {min_samples_to_split} is greater than total samples {train_data.shape[0]}")
+        sys.exit(1)
+    
+    if(train_data.shape[1]-1 < max_features):
+        print(f"Max features is greater than the total number of features")
+        sys.exit(1)
 
-    rf = RandomForest(num_trees=20, min_samples_split=3, max_depth=15, max_features=None)
+    rf = RandomForest(num_trees=num_trees, min_samples_split=min_samples_to_split, 
+                      max_depth=max_depth, max_features=max_features)
     
     rf.fit(train_data)
 

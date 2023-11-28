@@ -5,6 +5,7 @@
 #include <cmath>
 #include <random>
 #include <cmath>
+#include <getopt.h>
 #include "DecisionTree.cc"
 #include "iris_read.h"
 #include "InputRead.h"
@@ -144,21 +145,136 @@ public:
 
 };
 
-int main() {
-    // Example usage of RandomForest class
-    RandomForest rf(1, 3, 10);
+int main(int argc, char* argv[]) {
+    
+    // Initialize default values
+    int num_trees = 100;
+    int min_samples_split = 3;
+    int max_depth = 10;
+    int max_features = 0;
+    std::string ip_type = "iris";
+
+    // Parse command-line arguments
+    int opt;
+    while ((opt = getopt(argc, argv, "n:s:d:f:t:")) != -1) {
+        switch (opt) {
+            case 'n':
+                {
+                    char *endptr;
+                    float temp = strtof(optarg, &endptr);
+
+                    if (*endptr != '\0' && *endptr != '\n') {
+                        std::cerr << "Invalid input for -n: " << optarg << std::endl;
+                        exit(EXIT_FAILURE);
+                    }
+
+                    if (std::trunc(temp) != temp) {
+                        std::cerr << "Non-integer input for -n: " << optarg << std::endl;
+                        exit(EXIT_FAILURE);
+                    }
+
+                    num_trees = static_cast<int>(temp);
+                    if(num_trees < 0){
+                        std::cerr << "Negative-integer input for -n: " << optarg << std::endl;
+                        exit(EXIT_FAILURE);
+                    }
+                }
+                break;
+            case 's':
+                {
+                    char *endptr;
+                    float temp = strtof(optarg, &endptr);
+
+                    if (*endptr != '\0' && *endptr != '\n') {
+                        std::cerr << "Invalid input for -s: " << optarg << std::endl;
+                        exit(EXIT_FAILURE);
+                    }
+
+                    if (std::trunc(temp) != temp) {
+                        std::cerr << "Non-integer input for -s: " << optarg << std::endl;
+                        exit(EXIT_FAILURE);
+                    }
+
+                    min_samples_split = static_cast<int>(temp);
+                    if(min_samples_split < 0){
+                        std::cerr << "Negative-integer input for -s: " << optarg << std::endl;
+                        exit(EXIT_FAILURE);
+                    }
+                }
+                break;
+            case 'd':
+                {
+                    char *endptr;
+                    float temp = strtof(optarg, &endptr);
+
+                    if (*endptr != '\0' && *endptr != '\n') {
+                        std::cerr << "Invalid input for -d: " << optarg << std::endl;
+                        exit(EXIT_FAILURE);
+                    }
+
+                    if (std::trunc(temp) != temp) {
+                        std::cerr << "Non-integer input for -d: " << optarg << std::endl;
+                        exit(EXIT_FAILURE);
+                    }
+
+                    max_depth = static_cast<int>(temp);
+                    if(max_depth < 0){
+                        std::cerr << "Negative-integer input for -d: " << optarg << std::endl;
+                        exit(EXIT_FAILURE);
+                    }
+                }
+                break;
+            case 'f':
+                {
+                    char *endptr;
+                    float temp = strtof(optarg, &endptr);
+
+                    if (*endptr != '\0' && *endptr != '\n') {
+                        std::cerr << "Invalid input for -f: " << optarg << std::endl;
+                        exit(EXIT_FAILURE);
+                    }
+
+                    if (std::trunc(temp) != temp) {
+                        std::cerr << "Non-integer input for -f: " << optarg << std::endl;
+                        exit(EXIT_FAILURE);
+                    }
+
+                    max_features = temp;
+                    if(max_features < 0){
+                        std::cerr << "Negative-integer input for -f: " << optarg << std::endl;
+                        exit(EXIT_FAILURE);
+                    }
+                }
+                break;
+            case 't':
+                ip_type = optarg;
+                break;
+            default:
+                std::cerr << "Usage: " << argv[0] << " [-n <num_trees>]\n"
+                                                     "[-s <min_samples_split>]\n"
+                                                     "[-d <max_depth>]\n"
+                                                     "[-f <max_features>]\n" 
+                                                     "[-t <input-type: iris/mnist>]\n"
+                                                     "[-h this help message]" << std::endl;
+                exit(EXIT_FAILURE);
+        }
+    }
+    
+
+    RandomForest rf(num_trees, min_samples_split, max_depth);
 
     // Get data, parameters and labels
     
     std::vector<std::vector<double>> dataset, test_data;
     std::vector<int> labels;
-
-    const char* ip_type = "mnist";
     
-    if(strcmp(ip_type, "mnist") == 0){
-        read_mnist("train-images-idx3-ubyte", "train-labels-idx1-ubyte", dataset);
+    std::cout<<"Loading data..."<<std::endl;
+
+    if(strcmp(ip_type.c_str(), "mnist") == 0){
         // Read training data
-        read_mnist("t10k-images-idx3-ubyte", "t10k-labels-idx1-ubyte", test_data);
+        read_mnist("../data/train-images-idx3-ubyte", "../data/train-labels-idx1-ubyte", dataset);
+        // Read testing data
+        read_mnist("../data/t10k-images-idx3-ubyte", "../data/t10k-labels-idx1-ubyte", test_data);
 
         for(size_t i=0; i<test_data.size(); ++i){
             std::vector<double> temp;
@@ -169,7 +285,7 @@ int main() {
         }
     }
 
-    else{
+    else if(strcmp(ip_type.c_str(), "iris") == 0){
         Read_Iris_Dataset(dataset, labels);
         
         for(size_t i=0; i<dataset.size(); ++i){
@@ -178,20 +294,27 @@ int main() {
         }
     }
 
-    // std::cout<<"Read Data:";
-    // for(size_t i=0; i<dataset.size(); ++i){
-    //     for(size_t j=0; j<dataset[0].size(); ++j){
-    //         std::cout << dataset[i][j] << " ";
-    //     }
-    //     std::cout << labels[i] << std::endl;
-    // }    
-    // std::cout << dataset.size() << std::endl;
-    // check if the data load is corr
+    else{
+        std::cerr << "Unknown input for -t: " +ip_type<< std::endl;
+        exit(EXIT_FAILURE);
+    }
 
-    std::cout<<"Starting with training \n"<<std::endl;
+    if(test_data.size()){
+        if(max_features > test_data[0].size()){
+            std::cerr << "Max features is greater than the total features in data."<< std::endl;
+            exit(EXIT_FAILURE);
+        }
+    }
+
+    if(min_samples_split > dataset.size()){
+        std::cerr << "Min samples to split is greater than the total data."<< std::endl;
+        exit(EXIT_FAILURE);
+    }
+
+    std::cout<<"Starting with training..."<<std::endl;
     rf.fit(dataset);
 
-    std::cout<<"Training Ended\n"<<std::endl;
+    std::cout<<"Training Ended\n";
     std::vector<int> predictions = rf.predict_all(dataset);
 
     double accuracy = 0.0;
@@ -201,8 +324,6 @@ int main() {
     accuracy /= labels.size();
 
     std::cout<<"\n\nAccuracy is: "<<accuracy*100.0<<"%"<<std::endl;
-    // Make predictions or perform other operations with the trained forest
-    // ...
-
+    
     return 0;
 }

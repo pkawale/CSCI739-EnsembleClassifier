@@ -1,5 +1,6 @@
 import numpy as np
 import pandas as pd
+import sys
 from sklearn import datasets
 from sklearn.model_selection import train_test_split
 import argparse
@@ -57,15 +58,27 @@ def main():
     args = parser.parse_args()
 
     # Initialize all the parameters
-    num_trees, min_samples_split, max_depth, max_features = 100, 3, 10, None
+    num_trees, min_samples_to_split, max_depth, max_features = 100, 3, 10, None
 
     if args.n:
+        if(args.n < 0):
+            print(f"Invalid number of trees: {args.n}")
+            sys.exit(1)
         num_trees = args.n
     if args.s:
+        if(args.s < 0):
+            print(f"Invalid number of samples to split: {args.s}")
+            sys.exit(1)
         min_samples_to_split = args.s
     if args.d:
+        if(args.d < 0):
+            print(f"Invalid dpeth of tree: {args.d}")
+            sys.exit(1)
         max_depth = args.d
     if args.f:
+        if(args.f < 0):
+            print(f"Invalid number of features: {args.f}")
+            sys.exit(1)
         max_features = args.f
 
     # Load the iris dataset as a pandas DataFrame
@@ -76,10 +89,18 @@ def main():
     # Split the DataFrame into 60% training and 40% testing
     # Added stratification to ensure that the classes are evenly split.
     train_df, test_df = train_test_split(df, test_size=0.40, stratify=df['target'])
+    
+    if(train_df.shape[0] < min_samples_to_split):
+        print(f"Min samples to split {min_samples_to_split} is greater than total samples {train_df.shape[0]}")
+        sys.exit(1)
+    
+    if(train_df.shape[1]-1 < max_features):
+        print(f"Max features is greater than the total number of features")
+        sys.exit(1)
 
     # Create and fit the random forest model
     # Slightly increased the max_depth and decreased num_trees for demonstration.
-    rf = RandomForest(num_trees=num_trees, min_samples_split=min_samples_split, 
+    rf = RandomForest(num_trees=num_trees, min_samples_split=min_samples_to_split, 
                       max_depth=max_depth, max_features=max_features)
     
     rf.fit(train_df.values)
