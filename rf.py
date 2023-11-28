@@ -105,8 +105,10 @@ def main():
     print(f'Hello Random Forester!')
     ip = input("Enter the type of data to use: ")
 
-    if(len(ip) == 0):   ip = 'iris'
-    
+    if(len(ip) == 0):   
+        ip = 'iris'
+        print('Using the default iris')
+
     train_data, test_data = load_data(ip)
 
     rf = RandomForest(num_trees=20, min_samples_split=3, max_depth=15, max_features=None)
