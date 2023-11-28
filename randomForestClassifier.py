@@ -2,7 +2,7 @@ import numpy as np
 import pandas as pd
 from sklearn import datasets
 from sklearn.model_selection import train_test_split
-
+import argparse
 from DecisionTree import DecisionTree
 
 
@@ -46,6 +46,28 @@ class RandomForest:
 
 def main():
     print(f'Hello Random Forester!')
+
+    # Take user inputs
+    parser = argparse.ArgumentParser()
+    parser.add_argument("-n", help="number of trees", type=int)
+    parser.add_argument("-s", help="minimum samples to split", type=int)
+    parser.add_argument("-d", help="maximum depth of the tree", type=int)
+    parser.add_argument("-f", help="maximum number of features to use in a tree", type=int)
+
+    args = parser.parse_args()
+
+    # Initialize all the parameters
+    num_trees, min_samples_split, max_depth, max_features = 100, 3, 10, None
+
+    if args.n:
+        num_trees = args.n
+    if args.s:
+        min_samples_to_split = args.s
+    if args.d:
+        max_depth = args.d
+    if args.f:
+        max_features = args.f
+
     # Load the iris dataset as a pandas DataFrame
     iris = datasets.load_iris()
     df = pd.DataFrame(data=np.c_[iris['data'], iris['target']],
@@ -57,7 +79,9 @@ def main():
 
     # Create and fit the random forest model
     # Slightly increased the max_depth and decreased num_trees for demonstration.
-    rf = RandomForest(num_trees=100, min_samples_split=3, max_depth=15, max_features=None)
+    rf = RandomForest(num_trees=num_trees, min_samples_split=min_samples_split, 
+                      max_depth=max_depth, max_features=max_features)
+    
     rf.fit(train_df.values)
 
     # Prepare X_test and y_test for accuracy evaluation

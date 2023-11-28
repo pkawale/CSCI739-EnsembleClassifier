@@ -176,8 +176,6 @@ private:
         return leaf_value;
     }
 
-// private:
-
 };
 
 // int main() {

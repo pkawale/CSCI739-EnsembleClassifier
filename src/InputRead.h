@@ -16,6 +16,7 @@ int ReverseInt (int i)
 
 void read_mnist_params(std::string mnist_parameter_file, std::vector<std::vector<double>> &arr)
 {
+    // Source: https://compvisionlab.wordpress.com/2014/01/01/c-code-for-reading-mnist-data-set/
     std::ifstream file (mnist_parameter_file,std::ios::binary);
     if (file.is_open())
     {
@@ -83,15 +84,3 @@ void read_mnist(std::string feature_path, std::string label_path, std::vector<st
     read_mnist_labels(label_path, dataset);
 
 }
-
-// int main(){
-
-//     std::vector<std::vector<double>> dataset;
-//     // read_mnist_params("train-images-idx3-ubyte", dataset);
-//     read_mnist("train-images-idx3-ubyte", "train-labels-idx1-ubyte", dataset);
-//     for(size_t i=0; i<3; ++i){
-//         for(auto x:dataset[i])
-//             std::cout<<x<< " ";
-//     }
-//     std::cout<<std::endl;
-// }
