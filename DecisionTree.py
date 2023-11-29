@@ -1,6 +1,7 @@
 import numpy as np
 
 from Node import Node
+from concurrent.futures import ThreadPoolExecutor
 
 
 class DecisionTree:
@@ -24,6 +25,8 @@ class DecisionTree:
 
         # Find the best split
         best_split = self.get_best_split(dataset, num_features, mode=mode)
+        if len(best_split)  == 0:
+            best_split["info_gain"] = 0
         # Check for info gain
         if best_split["info_gain"] > 0:
             left_subtree = self.build_tree(best_split["dataset_left"], depth + 1, mode)
@@ -38,8 +41,8 @@ class DecisionTree:
 
     def calculate_leaf_value(self, y):
         y = y.astype(int)
-        leaf_value = np.argmax(np.bincount(y))
-        return leaf_value
+        values, counts = np.unique(y, return_counts=True)
+        return values[np.argmax(counts)]
 
     def get_best_split(self, dataset, num_features, mode="entropy"):
         best_split = {}
@@ -49,16 +52,18 @@ class DecisionTree:
         dataset = np.array(dataset)
 
         X, y = dataset[:, :-1], dataset[:, -1].astype(int)
+        unique, counts = np.unique(y, return_counts=True)
+        if np.max(counts) / np.sum(counts) > 0.9:
+            return best_split
 
         for feature_index in range(num_features):
             # Sort the data along the feature to calculate possible thresholds
-            sorted_indices = np.argsort(X[:, feature_index])
-            sorted_X = X[sorted_indices]
-            sorted_y = y[sorted_indices]
+            unique_values = np.unique(X[:, feature_index])
 
-            for i in range(1, len(sorted_X)):
-                threshold = (sorted_X[i, feature_index] + sorted_X[i - 1, feature_index]) / 2
-                data_left, data_right = dataset[sorted_indices[:i]], dataset[sorted_indices[i:]]
+            for i in range(1, len(unique_values)):
+                # Convert to a larger integer type before addition to prevent overflow
+                threshold = (int(unique_values[i]) + int(unique_values[i - 1])) / 2
+                data_left, data_right = dataset[X[:, feature_index] < threshold], dataset[~(X[:, feature_index] < threshold)]
 
                 if len(data_left) > 0 and len(data_right) > 0:
                     # Calculate information gain
@@ -114,5 +119,7 @@ class DecisionTree:
             return self.predict(x, tree.right)
 
     def predict_all(self, X):
-        return [self.predict(x) for x in X]
+        with ThreadPoolExecutor(max_workers=num_workers) as executor:
+            predictions = list(executor.map(self.predict, X))
+        return predictions
 

@@ -5,6 +5,7 @@ from sklearn import datasets
 from sklearn.model_selection import train_test_split
 import argparse
 from DecisionTree import DecisionTree
+from concurrent.futures import ProcessPoolExecutor
 
 
 class RandomForest:
@@ -27,23 +28,24 @@ class RandomForest:
     def _bootstrap_sample(self, data):
         n_samples = data.shape[0]
         indices = np.random.choice(n_samples, size=n_samples, replace=True)
-        feature_indices = self._get_feature_indices(data.shape[1] - 1)
+        feature_indices = np.arange(data.shape[1] - 1)  # Use all features for simplicity
+        if self.max_features is not None:
+            feature_indices = self._get_feature_indices(len(feature_indices))
         subset_data = data[indices][:, feature_indices]
-        # Append the target variable to the subset of data
-        subset_data = np.c_[subset_data, data[indices, -1]]  # -1 is the index for the target variable
-        return subset_data
+        return np.c_[subset_data, data[indices, -1]]
 
     def _get_feature_indices(self, n_features):
         feature_indices = np.random.choice(n_features, self.max_features, replace=False)
         return feature_indices
 
     def predict(self, x):
-        tree_preds = [tree.predict(x) for tree in self.trees]
-        most_common_output = max(set(tree_preds), key=tree_preds.count)
-        return most_common_output
+        tree_preds = np.array([tree.predict(x) for tree in self.trees])
+        return np.bincount(tree_preds).argmax()
 
     def predict_all(self, X):
-        return [self.predict(x) for x in X]
+        with ProcessPoolExecutor() as executor:
+            predictions = list(executor.map(self.predict, X))
+        return predictions
 
 
 def main():
@@ -121,7 +123,6 @@ def main():
 
     # Calculate the accuracy
     accuracy = np.sum(y_test == np.array(predictions)) / len(y_test)
-    print(f'Random Forest Predictions: {predictions}')
     print(f'Accuracy: {accuracy:.2f}')
 
 
