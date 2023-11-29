@@ -5,7 +5,7 @@ public class DecisionTreeCaller {
     public static void main(String[] args) {
         try {
             // Command to run the Python script
-            String command = "python3 randomForestClassifier.py";
+            String command = "python3 randomForestClassifier.py -n 100 -s 3 -d 10";
             ProcessBuilder pb = new ProcessBuilder(command.split(" "));
             Process p = pb.start();
 
