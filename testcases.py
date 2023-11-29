@@ -146,7 +146,8 @@ def main():
         train_df = np.column_stack((train_X_flattened, train_y))
 
         # Create and fit the random forest model
-        rf = RandomForest(num_trees=10, min_samples_split=2)
+        rf = RandomForest(num_trees=num_trees, min_samples_split=min_samples_to_split, 
+                        max_depth=max_depth, max_features=max_features, mode=mode)
         rf.fit(train_df)
 
         # Predict the responses for the test dataset
