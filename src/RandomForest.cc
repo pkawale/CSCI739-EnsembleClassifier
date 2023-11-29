@@ -32,7 +32,7 @@ public:
     /// @brief Runs the logic to fit the model.
     /// @param dataset 
     /// @param labels 
-    void fit(std::vector<std::vector<double>>& dataset) {
+    void fit(std::vector<std::vector<double>>& dataset, std::string mode="entropy") {
 
         // std::cout<<"Inside of fit\n"<<std::endl;
         #pragma omp parallel for
@@ -44,7 +44,7 @@ public:
             bootstrapSample(dataset,
                             data_subset);
             // std::cout<<"After bootstrap creation\n"<<std::endl;
-            tree.fit(data_subset);
+            tree.fit(data_subset, mode);
             trees.push_back(tree);
         }
     }
@@ -152,11 +152,11 @@ int main(int argc, char* argv[]) {
     int min_samples_split = 3;
     int max_depth = 10;
     int max_features = 0;
-    std::string ip_type = "iris";
+    std::string ip_type = "iris", tree_type = "entropy";
 
     // Parse command-line arguments
     int opt;
-    while ((opt = getopt(argc, argv, "n:s:d:f:t:")) != -1) {
+    while ((opt = getopt(argc, argv, "n:s:d:f:t:i:")) != -1) {
         switch (opt) {
             case 'n':
                 {
@@ -247,6 +247,13 @@ int main(int argc, char* argv[]) {
                 }
                 break;
             case 't':
+                tree_type = optarg;
+                if(strcmp(tree_type.c_str(), "gini") && strcmp(tree_type.c_str(), "entropy")){
+                    std::cerr << "Incorrect Tree type: " << optarg << std::endl;
+                    exit(EXIT_FAILURE);
+                }
+                break;
+            case 'i':
                 ip_type = optarg;
                 break;
             default:
@@ -254,7 +261,8 @@ int main(int argc, char* argv[]) {
                                                      "[-s <min_samples_split>]\n"
                                                      "[-d <max_depth>]\n"
                                                      "[-f <max_features>]\n" 
-                                                     "[-t <input-type: iris/mnist>]\n"
+                                                     "[-i <input-type: iris/mnist>]\n"
+                                                     "[-t <tree-type: gini/entropy>]\n"
                                                      "[-h this help message]" << std::endl;
                 exit(EXIT_FAILURE);
         }
@@ -299,6 +307,7 @@ int main(int argc, char* argv[]) {
         exit(EXIT_FAILURE);
     }
 
+    
     if(test_data.size()){
         if(max_features > test_data[0].size()){
             std::cerr << "Max features is greater than the total features in data."<< std::endl;

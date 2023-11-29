@@ -10,8 +10,8 @@ public:
     DecisionTree(int min_samples_split, int max_depth = 7) 
         : min_samples_split(min_samples_split), max_depth(max_depth), root(nullptr) {}
 
-    void fit(std::vector<std::vector<double>>& data) {
-        root = build_tree(data);
+    void fit(std::vector<std::vector<double>>& data, std::string mode="entropy") {
+        root = build_tree(data, 0, mode);
     }
 
     int predict(std::vector<double>& x, Node* tree = nullptr) {
@@ -37,7 +37,7 @@ private:
     int max_depth;
     Node* root;
     
-    Node* build_tree(std::vector<std::vector<double>>& dataset, int depth = 0) {
+    Node* build_tree(std::vector<std::vector<double>>& dataset, int depth = 0, std::string mode="entropy") {
         int num_samples = 0, num_features = 0;
         
         num_samples = dataset.size();
@@ -55,8 +55,8 @@ private:
         
         // Check for info gain
         if (best_split.info_gain > 0) {
-            Node* left_subtree = build_tree(best_split.dataset_left, depth + 1);
-            Node* right_subtree = build_tree(best_split.dataset_right, depth + 1);
+            Node* left_subtree = build_tree(best_split.dataset_left, depth + 1, mode);
+            Node* right_subtree = build_tree(best_split.dataset_right, depth + 1, mode);
             return new Node{ best_split.feature_index, best_split.threshold, left_subtree, right_subtree, best_split.info_gain, -1 };
         } else {
             // If no info gain, return a leaf node
@@ -115,7 +115,11 @@ private:
         return best_split;
     }
 
-    double calculate_information_gain(std::vector<std::vector<double>>& y, std::vector<std::vector<double>>& y_left, std::vector<std::vector<double>>& y_right, std::string mode = "entropy") {
+    double calculate_information_gain(std::vector<std::vector<double>>& y, 
+                                        std::vector<std::vector<double>>& y_left, 
+                                        std::vector<std::vector<double>>& y_right, 
+                                        std::string mode = "entropy") 
+    {
         double parent_loss = (mode == "gini") ? calculate_gini(y) : calculate_entropy(y);
         double child_loss = ((y_left.size() / y.size()) * ((mode == "gini") ? calculate_gini(y_left) : calculate_entropy(y_left))
                             + (y_right.size() / y.size()) * ((mode == "gini") ? calculate_gini(y_right) : calculate_entropy(y_right)));

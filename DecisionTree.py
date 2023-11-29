@@ -4,15 +4,15 @@ from Node import Node
 
 
 class DecisionTree:
-    def __init__(self, min_samples_split, max_depth=7):
+    def __init__(self, min_samples_split, max_depth=7, mode = "entropy"):
         self.min_samples_split = min_samples_split
         self.max_depth = max_depth
         self.root = None
 
-    def fit(self, data):
-        self.root = self.build_tree(data)
+    def fit(self, data, mode='entropy'):
+        self.root = self.build_tree(data, 0, mode)
 
-    def build_tree(self, dataset, depth=0):
+    def build_tree(self, dataset, depth=0, mode='entropy'):
         X, y = dataset[:, :-1], dataset[:, -1].astype(int)
         num_samples, num_features = np.shape(X)
 
@@ -23,11 +23,11 @@ class DecisionTree:
                         value=leaf_value)
 
         # Find the best split
-        best_split = self.get_best_split(dataset, num_features)
+        best_split = self.get_best_split(dataset, num_features, mode=mode)
         # Check for info gain
         if best_split["info_gain"] > 0:
-            left_subtree = self.build_tree(best_split["dataset_left"], depth + 1)
-            right_subtree = self.build_tree(best_split["dataset_right"], depth + 1)
+            left_subtree = self.build_tree(best_split["dataset_left"], depth + 1, mode)
+            right_subtree = self.build_tree(best_split["dataset_right"], depth + 1, mode)
             return Node(feature_index=best_split["feature_index"], threshold=best_split["threshold"],
                         left=left_subtree, right=right_subtree, info_gain=best_split["info_gain"], value=None)
         else:

@@ -8,19 +8,20 @@ from DecisionTree import DecisionTree
 
 
 class RandomForest:
-    def __init__(self, num_trees=100, min_samples_split=2, max_depth=7, max_features=None):
+    def __init__(self, num_trees=100, min_samples_split=2, max_depth=7, max_features=None, mode="entropy"):
         self.num_trees = num_trees
         self.min_samples_split = min_samples_split
         self.max_depth = max_depth
         self.max_features = max_features
         self.trees = []
+        self.mode = mode
 
     def fit(self, dataset):
         dataset = np.array(dataset)
         for _ in range(self.num_trees):
             tree = DecisionTree(min_samples_split=self.min_samples_split, max_depth=self.max_depth)
             random_subset_data = self._bootstrap_sample(dataset)
-            tree.fit(random_subset_data)
+            tree.fit(random_subset_data, mode=self.mode)
             self.trees.append(tree)
 
     def _bootstrap_sample(self, data):
@@ -54,11 +55,12 @@ def main():
     parser.add_argument("-s", help="minimum samples to split", type=int)
     parser.add_argument("-d", help="maximum depth of the tree", type=int)
     parser.add_argument("-f", help="maximum number of features to use in a tree", type=int)
+    parser.add_argument("-i", help="information gain type gini/entropy")
 
     args = parser.parse_args()
 
     # Initialize all the parameters
-    num_trees, min_samples_to_split, max_depth, max_features = 100, 3, 10, None
+    num_trees, min_samples_to_split, max_depth, max_features, mode = 100, 3, 10, None, "entropy"
 
     if args.n:
         if(args.n < 0):
@@ -80,6 +82,11 @@ def main():
             print(f"Invalid number of features: {args.f}")
             sys.exit(1)
         max_features = args.f
+    if args.i:
+        if(args.f == 'entropy' or args.f == 'gini'):
+            print(f"Invalid tree type: {args.i}")
+            sys.exit(1)
+        mode = args.i
 
     # Load the iris dataset as a pandas DataFrame
     iris = datasets.load_iris()
@@ -94,14 +101,14 @@ def main():
         print(f"Min samples to split {min_samples_to_split} is greater than total samples {train_df.shape[0]}")
         sys.exit(1)
     
-    if(train_df.shape[1]-1 < max_features):
+    if(max_features != None and train_df.shape[1]-1 < max_features):
         print(f"Max features is greater than the total number of features")
         sys.exit(1)
 
     # Create and fit the random forest model
     # Slightly increased the max_depth and decreased num_trees for demonstration.
     rf = RandomForest(num_trees=num_trees, min_samples_split=min_samples_to_split, 
-                      max_depth=max_depth, max_features=max_features)
+                      max_depth=max_depth, max_features=max_features, mode=mode)
     
     rf.fit(train_df.values)
 
