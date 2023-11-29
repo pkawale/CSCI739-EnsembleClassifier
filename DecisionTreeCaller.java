@@ -6,8 +6,37 @@ public class DecisionTreeCaller {
         try {
             // Command to run the Python script
             StringBuilder command = new StringBuilder("python3 randomForestClassifier.py");
-            for (String arg : args) {
-                command.append(" ").append(arg);
+            // Parse and validate arguments
+            for (int i = 0; i < args.length; i++) {
+                String arg = args[i];
+
+                // Check if the argument is a parameter
+                if (arg.startsWith("-")) {
+                    if (i + 1 < args.length) {
+                        String value = args[i + 1];
+
+                        // Validate the argument value
+                        if (arg.equals("-n") || arg.equals("-s") || arg.equals("-d") || arg.equals("-f")) {
+                            int intValue = Integer.parseInt(value);
+                            if (intValue < 0) {
+                                System.out.println("Invalid value for " + arg + ": " + intValue);
+                                return;
+                            }
+                        } else if (arg.equals("-i")) {
+                            if (!value.equals("gini") && !value.equals("entropy")) {
+                                System.out.println("Invalid value for -i: " + value);
+                                return;
+                            }
+                        }
+
+                        // Append the argument to the command
+                        command.append(" ").append(arg).append(" ").append(value);
+                        i++; // Skip next as it's a value
+                    } else {
+                        System.out.println("Expected value after " + arg);
+                        return;
+                    }
+                }
             }
             ProcessBuilder pb = new ProcessBuilder(command.toString().split(" "));
             Process p = pb.start();
