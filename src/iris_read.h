@@ -2,6 +2,7 @@
 #include<algorithm>
 #include<sstream>
 #include<fstream>
+#include<vector>
 #include<cstring>
 
 enum flower {Iris_setosa, Iris_versicolor, Iris_virginica, Iris_unkown};
